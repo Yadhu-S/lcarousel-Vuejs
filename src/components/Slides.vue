@@ -1,13 +1,15 @@
 <template>
 <div>
-  <div class="topPrev">
+  <div :style="`width:${topImgSize}px; height:${topImgSize}px;`" class="topPrev">
     <div class="slideImg" :style="`transform:translateX(${getOffsetTop}px);`">
       <img v-for="slide in slides" :key="slide.id" class="bigImgs" :src="slide.src">
     </div>
   </div>
   <div class="bottomPrev">
     <div class="slideImg" :style="`transform:translateX(${getOffset}px);`" >
-      <img v-for="(slide,index) in slides" @mouseover="prevPic(index)" :key="slide.id" class="smallImgs" :src="slide.src">
+      <img v-for="(slide,index) in slides" @mouseover="prevPic(index)" 
+      @mouseout="away" @click="fixImg(index)"
+      :key="slide.id" class="smallImgs" :src="slide.src">
     </div>
   </div>
   <button @click.prevent="moveLeft">Left</button>
@@ -21,6 +23,8 @@ export default {
     return {
       offset: 0,
       offsetTop: 0,
+      temp: 0,
+      mvLft: false,
       slides: [
         {src: '../../static/1.jpg'},
         {src: '../../static/2.jpg'},
@@ -32,34 +36,56 @@ export default {
       ]
     }
   },
+  props: {
+    topImgSize: {
+      type: Number,
+      default: 300
+    }
+  },
   computed: {
     getOffset () {
-      return this.offset
+      if (this.offset <= -300 || this.mvLft) {
+        this.mvLft = false
+        return this.offset
+      }
+      console.log(this.mvLft)
     },
     getOffsetTop () {
       return this.offsetTop
     }
   },
   methods: {
-    prevPic (index) {
-      console.log(index)
-      this.offsetTop = index * -300
+    // Called when mouse moves away
+    away () {
+      this.offsetTop = this.temp
     },
+    // Called when mouse hovers
+    prevPic (index) {
+      this.temp = this.offsetTop
+      this.offsetTop = index * -this.topImgSize
+    },
+    // Called when clicked on image
+    fixImg (index) {
+      this.offsetTop = index * -this.topImgSize
+      this.temp = this.offsetTop
+    },
+    // Called when left button is clicked
     moveLeft () {
       if (this.offset !== 0) {
         this.offset = this.offset + 100
       }
       if (this.offsetTop !== 0) {
-        this.offsetTop = this.offsetTop + 300
+        this.offsetTop = this.offsetTop + this.topImgSize
       }
+      this.mvLft = true
     },
+    // Called when right button is clicked
     moveRight () {
       if (this.offset >= ((this.slides.length - 4) * -100)) {
         this.offset -= 100
       }
-      if (this.offsetTop >= (this.slides.length - 2) * -300) {
-        this.offsetTop -= 300
-        console.log(this.offsetTop)
+      if (this.offsetTop >= (this.slides.length - 2) * -this.topImgSize) {
+        this.offsetTop -= this.topImgSize
       }
     }
   }
@@ -72,10 +98,6 @@ export default {
   height: 100px;
   background-color: gray;
   overflow: hidden;
-}
-.topPrev {
-  width: 300px;
-  height: 300px;
 }
 .smallImgs,.bigImgs{
   width:100px;
